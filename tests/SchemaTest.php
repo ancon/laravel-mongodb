@@ -2,7 +2,6 @@
 
 class SchemaTest extends TestCase
 {
-
     public function tearDown()
     {
         Schema::drop('newcollection');
@@ -168,12 +167,41 @@ class SchemaTest extends TestCase
         $this->assertEquals(1, $index['key']['token']);
     }
 
+    public function testGeospatial()
+    {
+        Schema::collection('newcollection', function ($collection) {
+            $collection->geospatial('point');
+            $collection->geospatial('area', '2d');
+            $collection->geospatial('continent', '2dsphere');
+        });
+
+        $index = $this->getIndex('newcollection', 'point');
+        $this->assertEquals('2d', $index['key']['point']);
+
+        $index = $this->getIndex('newcollection', 'area');
+        $this->assertEquals('2d', $index['key']['area']);
+
+        $index = $this->getIndex('newcollection', 'continent');
+        $this->assertEquals('2dsphere', $index['key']['continent']);
+    }
+
     public function testDummies()
     {
         Schema::collection('newcollection', function ($collection) {
             $collection->boolean('activated')->default(0);
             $collection->integer('user_id')->unsigned();
         });
+    }
+
+    public function testSparseUnique()
+    {
+        Schema::collection('newcollection', function ($collection) {
+            $collection->sparse_and_unique('sparseuniquekey');
+        });
+
+        $index = $this->getIndex('newcollection', 'sparseuniquekey');
+        $this->assertEquals(1, $index['sparse']);
+        $this->assertEquals(1, $index['unique']);
     }
 
     protected function getIndex($collection, $name)
